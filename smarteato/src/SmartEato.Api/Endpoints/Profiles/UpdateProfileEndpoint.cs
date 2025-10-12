@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartEato.Api.Middleware;
 using SmartEato.Api.Models.DTOs;
 using SmartEato.Api.Services;
 
@@ -16,12 +17,19 @@ public class UpdateProfileEndpoint : IEndpoint
         {
             try
             {
-                var userId = GetUserId(httpContext);
-                logger.LogInformation("Updating profile for user {UserId}", userId);
+                var userId = httpContext.GetUserId();
+                var userEmail = httpContext.GetUserEmail();
+                
+                logger.LogInformation("Updating profile for user {UserId} ({Email})", userId, userEmail);
 
                 var profile = await profileService.UpdateProfileAsync(userId, dto);
 
                 return Results.Ok(profile);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "Unauthorized access attempt");
+                return Results.Unauthorized();
             }
             catch (InvalidOperationException ex)
             {
@@ -51,15 +59,6 @@ public class UpdateProfileEndpoint : IEndpoint
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status401Unauthorized)
         .Produces(StatusCodes.Status404NotFound);
-    }
-
-    private static Guid GetUserId(HttpContext context)
-    {
-        var userIdString = context.Items["UserId"]?.ToString()
-            ?? context.User.FindFirst("sub")?.Value
-            ?? throw new UnauthorizedAccessException("User ID not found in token");
-
-        return Guid.Parse(userIdString);
     }
 }
 

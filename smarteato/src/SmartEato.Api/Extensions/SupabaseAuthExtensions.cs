@@ -25,9 +25,12 @@ public static class SupabaseAuthExtensions
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
                 ValidateIssuer = false, // Supabase doesn't use issuer validation by default
-                ValidateAudience = false, // Supabase doesn't use audience validation by default
+                ValidateAudience = true, // Validate audience for security
+                ValidAudience = "authenticated", // Supabase default audience
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                // Map the Supabase 'sub' claim to NameIdentifier
+                NameClaimType = "sub"
             };
 
             options.Events = new JwtBearerEvents
@@ -43,8 +46,11 @@ public static class SupabaseAuthExtensions
                 {
                     var logger = context.HttpContext.RequestServices
                         .GetRequiredService<ILogger<Program>>();
-                    logger.LogInformation("Token validated for user: {User}", 
-                        context.Principal?.Identity?.Name);
+                    
+                    // Log all claims for debugging
+                    var claims = context.Principal?.Claims.Select(c => $"{c.Type}={c.Value}");
+                    logger.LogInformation("Token validated. Claims: {Claims}", string.Join(", ", claims ?? Array.Empty<string>()));
+                    
                     return Task.CompletedTask;
                 }
             };
@@ -55,4 +61,3 @@ public static class SupabaseAuthExtensions
         return services;
     }
 }
-

@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace SmartEato.Api.Middleware;
 
@@ -16,14 +15,36 @@ public class SupabaseAuthMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Extract user ID from JWT claims added by JWT Bearer authentication
-        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier) 
-                          ?? context.User.FindFirst("sub");
-
-        if (userIdClaim != null)
+        if (context.User.Identity?.IsAuthenticated == true)
         {
-            context.Items["UserId"] = userIdClaim.Value;
-            _logger.LogInformation("User ID extracted from JWT: {UserId}", userIdClaim.Value);
+            // Extract user ID from 'sub' claim (Supabase user ID)
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier) 
+                              ?? context.User.FindFirst("sub");
+
+            // Extract email from 'email' claim
+            var emailClaim = context.User.FindFirst(ClaimTypes.Email)
+                            ?? context.User.FindFirst("email");
+
+            // Extract role from 'role' claim
+            var roleClaim = context.User.FindFirst(ClaimTypes.Role)
+                           ?? context.User.FindFirst("role");
+
+            if (userIdClaim != null)
+            {
+                context.Items["UserId"] = userIdClaim.Value;
+                _logger.LogInformation("User authenticated - ID: {UserId}", userIdClaim.Value);
+            }
+
+            if (emailClaim != null)
+            {
+                context.Items["UserEmail"] = emailClaim.Value;
+                _logger.LogInformation("User email: {Email}", emailClaim.Value);
+            }
+
+            if (roleClaim != null)
+            {
+                context.Items["UserRole"] = roleClaim.Value;
+            }
         }
 
         await _next(context);
@@ -38,3 +59,33 @@ public static class SupabaseAuthMiddlewareExtensions
     }
 }
 
+/// <summary>
+/// Extension methods to easily access authenticated user information
+/// </summary>
+public static class HttpContextExtensions
+{
+    public static Guid GetUserId(this HttpContext context)
+    {
+        var userIdString = context.Items["UserId"]?.ToString()
+            ?? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? context.User.FindFirst("sub")?.Value
+            ?? throw new UnauthorizedAccessException("User ID not found in token");
+
+        return Guid.Parse(userIdString);
+    }
+
+    public static string GetUserEmail(this HttpContext context)
+    {
+        return context.Items["UserEmail"]?.ToString()
+            ?? context.User.FindFirst(ClaimTypes.Email)?.Value
+            ?? context.User.FindFirst("email")?.Value
+            ?? throw new UnauthorizedAccessException("User email not found in token");
+    }
+
+    public static string? GetUserRole(this HttpContext context)
+    {
+        return context.Items["UserRole"]?.ToString()
+            ?? context.User.FindFirst(ClaimTypes.Role)?.Value
+            ?? context.User.FindFirst("role")?.Value;
+    }
+}

@@ -74,22 +74,41 @@ Then press `a` for Android or `i` for iOS.
 ## 🔧 Troubleshooting
 
 ### "JWT Secret is not configured"
-→ Add JWT Secret to `appsettings.json` (see Step 2 above)
+→ **Most common issue!** Add JWT Secret to `appsettings.json`:
+- Go to Supabase → Settings → API → JWT Settings
+- Copy the JWT Secret
+- Add to `appsettings.json` under `Supabase:JwtSecret`
+- Restart the API
+
+### "401 Unauthorized" from API
+→ JWT token validation failed. Check:
+1. JWT Secret is correct in `appsettings.json`
+2. JWT Secret matches your Supabase project
+3. Mobile app is logged in (has valid session)
+4. See `JWT_AUTHENTICATION_GUIDE.md` for detailed debugging
 
 ### "Failed to create profile"
 → Make sure you ran `database-setup.sql` in Supabase
 
 ### Mobile can't connect to API  
 → Check that API is running and the `API_BASE_URL` in `.env` is correct
+- Android Emulator: `http://10.0.2.2:5000`
+- iOS Simulator: `http://localhost:5000`
+- Physical Device: `http://[your-ip]:5000`
 
 ### "Authentication failed"
-→ Verify JWT Secret matches your Supabase project
+→ JWT token validation is failing
+- Verify JWT Secret matches your Supabase project exactly
+- Check API logs for detailed error messages
+- See `JWT_AUTHENTICATION_GUIDE.md` for step-by-step debugging
 
 ## 📚 Full Documentation
 
 - **Setup Guide**: `AUTH_SETUP_GUIDE.md` - Detailed setup instructions
+- **JWT Guide**: `JWT_AUTHENTICATION_GUIDE.md` - How JWT tokens work & troubleshooting
 - **Implementation Summary**: `AUTH_IMPLEMENTATION_SUMMARY.md` - What was built and how it works
 - **Database Schema**: `src/SmartEato.Api/database-setup.sql` - SQL for Supabase
+- **Minimal API Architecture**: `MINIMAL_API_ARCHITECTURE.md` - Backend architecture explanation
 
 ## ✨ What's Next?
 

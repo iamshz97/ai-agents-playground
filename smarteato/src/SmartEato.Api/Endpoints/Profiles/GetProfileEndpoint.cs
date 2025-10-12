@@ -1,3 +1,4 @@
+using SmartEato.Api.Middleware;
 using SmartEato.Api.Services;
 
 namespace SmartEato.Api.Endpoints.Profiles;
@@ -13,8 +14,10 @@ public class GetProfileEndpoint : IEndpoint
         {
             try
             {
-                var userId = GetUserId(httpContext);
-                logger.LogInformation("Getting profile for user {UserId}", userId);
+                var userId = httpContext.GetUserId();
+                var userEmail = httpContext.GetUserEmail();
+                
+                logger.LogInformation("Getting profile for user {UserId} ({Email})", userId, userEmail);
 
                 var profile = await profileService.GetProfileAsync(userId);
 
@@ -24,6 +27,11 @@ public class GetProfileEndpoint : IEndpoint
                 }
 
                 return Results.Ok(profile);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "Unauthorized access attempt");
+                return Results.Unauthorized();
             }
             catch (Exception ex)
             {
@@ -47,15 +55,6 @@ public class GetProfileEndpoint : IEndpoint
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized)
         .Produces(StatusCodes.Status404NotFound);
-    }
-
-    private static Guid GetUserId(HttpContext context)
-    {
-        var userIdString = context.Items["UserId"]?.ToString()
-            ?? context.User.FindFirst("sub")?.Value
-            ?? throw new UnauthorizedAccessException("User ID not found in token");
-
-        return Guid.Parse(userIdString);
     }
 }
 
