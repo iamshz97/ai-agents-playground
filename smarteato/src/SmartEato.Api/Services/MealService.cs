@@ -39,6 +39,7 @@ public class MealService : IMealService
         {
             var client = CreateSupabaseClient();
 
+            // Don't serialize JSONB fields - let them be serialized as objects by JsonSerializer
             var mealData = new
             {
                 user_id = meal.UserId,
@@ -49,8 +50,8 @@ public class MealService : IMealService
                 protein = meal.Protein,
                 carbs = meal.Carbs,
                 fats = meal.Fats,
-                ingredients = JsonSerializer.Serialize(meal.Ingredients),
-                ai_analysis = meal.AiAnalysis != null ? JsonSerializer.Serialize(meal.AiAnalysis) : null
+                ingredients = meal.Ingredients, // Will be serialized as JSON array
+                ai_analysis = meal.AiAnalysis    // Will be serialized as JSON object
             };
 
             var json = JsonSerializer.Serialize(mealData);
@@ -337,13 +338,69 @@ public class MealService : IMealService
             Carbs = data["carbs"].GetDecimal(),
             Fats = data["fats"].GetDecimal(),
             Ingredients = data.ContainsKey("ingredients") && data["ingredients"].ValueKind != JsonValueKind.Null
-                ? JsonSerializer.Deserialize<List<Ingredient>>(data["ingredients"].GetRawText())
+                ? ParseIngredients(data["ingredients"])
                 : null,
             AiAnalysis = data.ContainsKey("ai_analysis") && data["ai_analysis"].ValueKind != JsonValueKind.Null
-                ? JsonSerializer.Deserialize<AiAnalysis>(data["ai_analysis"].GetRawText())
+                ? ParseAiAnalysis(data["ai_analysis"])
                 : null,
             CreatedAt = DateTime.Parse(data["created_at"].GetString()!)
         };
+    }
+
+    private List<Ingredient>? ParseIngredients(JsonElement element)
+    {
+        try
+        {
+            // If it's a string (double-serialized), parse the string first
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var jsonString = element.GetString();
+                return string.IsNullOrEmpty(jsonString) 
+                    ? null 
+                    : JsonSerializer.Deserialize<List<Ingredient>>(jsonString);
+            }
+            
+            // If it's already an array, deserialize directly
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                return JsonSerializer.Deserialize<List<Ingredient>>(element.GetRawText());
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse ingredients");
+            return null;
+        }
+    }
+
+    private AiAnalysis? ParseAiAnalysis(JsonElement element)
+    {
+        try
+        {
+            // If it's a string (double-serialized), parse the string first
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var jsonString = element.GetString();
+                return string.IsNullOrEmpty(jsonString)
+                    ? null
+                    : JsonSerializer.Deserialize<AiAnalysis>(jsonString);
+            }
+
+            // If it's already an object, deserialize directly
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                return JsonSerializer.Deserialize<AiAnalysis>(element.GetRawText());
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse AI analysis");
+            return null;
+        }
     }
 
     private DailySummary MapToDailySummary(Dictionary<string, JsonElement> data)
