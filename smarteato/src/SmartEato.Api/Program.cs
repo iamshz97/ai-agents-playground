@@ -15,6 +15,9 @@ builder.Services.AddHttpClient();
 
 // Register services
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IMealAnalysisService, MealAnalysisService>();
+builder.Services.AddScoped<IMealService, MealService>();
+builder.Services.AddScoped<IMealWorkflowService, MealWorkflowService>();
 
 // Register Minimal API endpoints
 builder.Services.AddEndpoints(typeof(Program).Assembly);
