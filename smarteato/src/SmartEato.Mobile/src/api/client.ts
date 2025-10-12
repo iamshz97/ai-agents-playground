@@ -7,6 +7,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '../config/api.config';
 import { ApiError } from '../types/api.types';
+import { supabase } from '../services/supabase';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -24,12 +25,12 @@ class ApiClient {
   private setupInterceptors(): void {
     // Request interceptor
     this.client.interceptors.request.use(
-      (config) => {
-        // Add auth token if available
-        // const token = getAuthToken();
-        // if (token) {
-        //   config.headers.Authorization = `Bearer ${token}`;
-        // }
+      async (config) => {
+        // Add auth token from Supabase session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
+        }
         
         console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
         return config;

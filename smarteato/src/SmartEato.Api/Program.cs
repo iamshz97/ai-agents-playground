@@ -1,29 +1,23 @@
-using Supabase;
+using SmartEato.Api.Extensions;
+using SmartEato.Api.Middleware;
+using SmartEato.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults (includes OpenTelemetry, health checks, service discovery)
 builder.AddServiceDefaults();
 
+// Add Supabase Authentication
+builder.Services.AddSupabaseAuthentication(builder.Configuration);
+
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
-// Configure Supabase
-builder.Services.AddScoped<Supabase.Client>(_ =>
-{
-    var url = builder.Configuration["Supabase:Url"] 
-        ?? throw new InvalidOperationException("Supabase URL is not configured");
-    var key = builder.Configuration["Supabase:Key"] 
-        ?? throw new InvalidOperationException("Supabase Key is not configured");
+// Register services
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
-    var options = new SupabaseOptions
-    {
-        AutoRefreshToken = true,
-        AutoConnectRealtime = true
-    };
-
-    return new Supabase.Client(url, key, options);
-});
+// Register Minimal API endpoints
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 // Configure CORS for React Native
 builder.Services.AddCors(options =>
@@ -71,9 +65,13 @@ app.UseHttpsRedirection();
 
 app.UseCors("MobileAppPolicy");
 
+// Add authentication and authorization middleware
+app.UseAuthentication();
+app.UseSupabaseAuth();
 app.UseAuthorization();
 
-app.MapControllers();
+// Map Minimal API endpoints
+app.MapEndpoints();
 
 // Map default endpoints (health checks)
 app.MapDefaultEndpoints();
