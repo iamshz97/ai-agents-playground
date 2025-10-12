@@ -18,14 +18,22 @@ public class DeleteMealEndpoint : IEndpoint
                 var userId = httpContext.GetUserId();
                 var userEmail = httpContext.GetUserEmail();
 
-                logger.LogInformation("User {UserId} ({Email}) deleting meal {MealId}", userId, userEmail, mealId);
+                logger.LogInformation("DELETE MEAL REQUEST - UserId: {UserId}, Email: {Email}, MealId: {MealId}", 
+                    userId, userEmail, mealId);
+                logger.LogInformation("UserId Type: {UserIdType}, MealId Type: {MealIdType}", 
+                    userId.GetType().Name, mealId.GetType().Name);
 
                 var deleted = await mealService.DeleteMealAsync(userId, mealId);
 
                 if (!deleted)
                 {
+                    logger.LogWarning("DELETE FAILED - Meal {MealId} not found or doesn't belong to user {UserId}", 
+                        mealId, userId);
                     return Results.NotFound(new { message = "Meal not found or already deleted" });
                 }
+
+                logger.LogInformation("DELETE SUCCESS - Meal {MealId} deleted successfully for user {UserId}", 
+                    mealId, userId);
 
                 // Update daily summary after deletion
                 var today = DateOnly.FromDateTime(DateTime.Today);

@@ -79,34 +79,82 @@ public class MealService : IMealService
         {
             var client = CreateSupabaseClient();
             
-            // First check if the meal exists and belongs to the user
-            var checkResponse = await client.GetAsync($"meals?id=eq.{mealId}&user_id=eq.{userId}&select=id");
+            _logger.LogInformation("DeleteMealAsync - Starting deletion for MealId: {MealId}, UserId: {UserId}", 
+                mealId, userId);
             
-            if (!checkResponse.IsSuccessStatusCode)
+            // First, check if the meal exists at all (without user filter)
+            var existsCheckUrl = $"meals?id=eq.{mealId}&select=id,user_id";
+            _logger.LogInformation("Checking meal existence: {Url}", existsCheckUrl);
+            
+            var existsResponse = await client.GetAsync(existsCheckUrl);
+            
+            if (!existsResponse.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Meal {MealId} not found or doesn't belong to user {UserId}", mealId, userId);
+                _logger.LogWarning("Supabase request failed with status: {StatusCode}", existsResponse.StatusCode);
                 return false;
             }
 
-            var checkBody = await checkResponse.Content.ReadAsStringAsync();
-            var meals = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(checkBody);
+            var existsBody = await existsResponse.Content.ReadAsStringAsync();
+            _logger.LogInformation("Existence check response: {Response}", existsBody);
             
-            if (meals == null || meals.Count == 0)
+            var existingMeals = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(existsBody);
+            
+            if (existingMeals == null || existingMeals.Count == 0)
             {
-                _logger.LogWarning("Meal {MealId} not found for user {UserId}", mealId, userId);
+                _logger.LogWarning("Meal {MealId} does not exist in database", mealId);
                 return false;
+            }
+
+            // Verify the meal belongs to the user
+            var mealData = existingMeals.First();
+            var mealUserId = Guid.Parse(mealData["user_id"].GetString()!);
+            
+            _logger.LogInformation("Meal found - MealUserId: {MealUserId}, RequestUserId: {RequestUserId}, Match: {Match}", 
+                mealUserId, userId, mealUserId == userId);
+            
+            if (mealUserId != userId)
+            {
+                _logger.LogWarning("User {UserId} attempted to delete meal {MealId} belonging to {MealUserId}", 
+                    userId, mealId, mealUserId);
+                return false;
+            }
+
+            // Delete associated chat threads first (to avoid foreign key constraint violation)
+            var deleteChatUrl = $"chat_threads?meal_id=eq.{mealId}";
+            _logger.LogInformation("Deleting associated chat threads: {Url}", deleteChatUrl);
+            
+            var deleteChatResponse = await client.DeleteAsync(deleteChatUrl);
+            if (deleteChatResponse.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Deleted associated chat threads for meal {MealId}", mealId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete chat threads for meal {MealId}, status: {StatusCode}", 
+                    mealId, deleteChatResponse.StatusCode);
+                // Continue anyway - there might not be any chat threads
             }
 
             // Now delete the meal
-            var deleteResponse = await client.DeleteAsync($"meals?id=eq.{mealId}&user_id=eq.{userId}");
-            deleteResponse.EnsureSuccessStatusCode();
+            var deleteUrl = $"meals?id=eq.{mealId}&user_id=eq.{userId}";
+            _logger.LogInformation("Deleting meal: {Url}", deleteUrl);
+            
+            var deleteResponse = await client.DeleteAsync(deleteUrl);
+            
+            if (!deleteResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await deleteResponse.Content.ReadAsStringAsync();
+                _logger.LogError("Delete request failed with status {StatusCode}: {ErrorBody}", 
+                    deleteResponse.StatusCode, errorBody);
+                return false;
+            }
 
-            _logger.LogInformation("Deleted meal {MealId} for user {UserId}", mealId, userId);
+            _logger.LogInformation("Successfully deleted meal {MealId} for user {UserId}", mealId, userId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting meal {MealId}", mealId);
+            _logger.LogError(ex, "Exception while deleting meal {MealId} for user {UserId}", mealId, userId);
             return false;
         }
     }
