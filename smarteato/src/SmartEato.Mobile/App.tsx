@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useApiInfo } from './src/api/hooks';
+import { API_BASE_URL } from '@env';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,7 +23,7 @@ function HomeScreen() {
       <Text style={styles.subtitle}>Calorie Tracker AI Agentic App</Text>
       
       <View style={styles.apiStatus}>
-        <Text style={styles.label}>API Status:</Text>
+        <Text style={styles.label}>API Status: {process.env.TEST_SETTING ?? 'N/A'}</Text>
         {isLoading && <ActivityIndicator size="small" color="#0000ff" />}
         {error && <Text style={styles.error}>Error: {error.message}</Text>}
         {data && (

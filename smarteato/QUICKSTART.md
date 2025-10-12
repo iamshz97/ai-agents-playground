@@ -40,7 +40,9 @@ dotnet user-secrets set "Supabase:Key" "YOUR_ANON_KEY"
 cd ../..
 ```
 
-## Step 3: Run with Aspire (1 minute)
+## Step 3: Run Everything with Aspire (1 minute)
+
+🎉 **Both the API and Mobile App will start together!**
 
 ### Option A: Using PowerShell Script (Windows)
 
@@ -56,31 +58,28 @@ dotnet run
 ```
 
 ✅ The Aspire Dashboard will open in your browser
-✅ The API will be running (check the dashboard for the URL)
+✅ You'll see TWO services running:
+   - **smarteato-api** - The backend API
+   - **smarteato-mobile** - The React Native app (Expo)
 
-## Step 4: Run Mobile App (1 minute)
+## Step 4: Access the Mobile App (30 seconds)
 
-Open a **new terminal window**:
+The mobile app is already running! To access it:
 
-### Option A: Using PowerShell Script (Windows)
+1. **In the Aspire Dashboard**, find the **smarteato-mobile** service
+2. **Click on its endpoint** (usually `http://localhost:8081`)
+3. **Or open your browser** to `http://localhost:8081`
 
-```powershell
-.\run-mobile.ps1
-```
-
-### Option B: Manual
-
-```bash
-cd src/SmartEato.Mobile
-npm install  # First time only
-npm start
-```
-
-Then:
+You'll see the Expo interface. Then:
 - Press **`a`** for Android emulator
 - Press **`i`** for iOS simulator (macOS only)
 - Press **`w`** for web browser
 - Scan QR code with **Expo Go** app for physical device
+
+> **Note**: If you prefer to run the mobile app separately (not with Aspire):
+> ```powershell
+> .\run-mobile.ps1
+> ```
 
 ## Step 5: Verify Connection
 

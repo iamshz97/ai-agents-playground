@@ -251,3 +251,4 @@ The SmartEato infrastructure is **100% complete** and ready for development. The
 
 **You can now run both the backend and frontend and start building features!**
 
+

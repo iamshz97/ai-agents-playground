@@ -111,9 +111,9 @@ npm install
 
 ## 🏃 Running the Application
 
-### Option 1: Run with .NET Aspire (Recommended)
+### Option 1: Run with .NET Aspire (Recommended) ⭐
 
-This will orchestrate and run the API service with observability:
+This will orchestrate and run **BOTH** the API and Mobile app together:
 
 ```bash
 # From the smarteato root directory
@@ -122,12 +122,20 @@ dotnet run
 ```
 
 The Aspire dashboard will open in your browser showing:
-- **Service Status**: Monitor API health
+- **smarteato-api** - Backend API service
+- **smarteato-mobile** - React Native app (Expo dev server)
+- **Service Status**: Monitor health of both services
 - **Logs**: View application logs
 - **Traces**: Distributed tracing
 - **Metrics**: Performance metrics
 
 The API will be available at the URL shown in the Aspire dashboard (typically `http://localhost:5000` or similar).
+
+The mobile app will be available at `http://localhost:8081` - click on this to access the Expo interface, then:
+- Press `a` for Android emulator
+- Press `i` for iOS simulator (macOS only)
+- Press `w` for web browser
+- Scan QR code with Expo Go app for physical device
 
 ### Option 2: Run Services Individually
 

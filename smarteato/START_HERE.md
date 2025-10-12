@@ -9,7 +9,7 @@ Welcome to **SmartEato** - Your AI-powered calorie tracking application!
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - What was built 📊
 - **[IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md)** - Detailed checklist ✅
 
-## 🚀 Quick Start (3 Steps)
+## 🚀 Quick Start (2 Steps!)
 
 ### Step 1: Configure Supabase (2 minutes)
 1. Create account at [supabase.com](https://supabase.com)
@@ -25,19 +25,17 @@ Welcome to **SmartEato** - Your AI-powered calorie tracking application!
 }
 ```
 
-### Step 2: Run Backend (30 seconds)
+### Step 2: Run Everything (30 seconds)
 ```powershell
 .\run-aspire.ps1
 ```
 ✅ Aspire Dashboard will open in your browser
-✅ API will be running
+✅ **Both API and Mobile App** will start automatically!
+✅ Look for **two services** in the dashboard:
+   - smarteato-api
+   - smarteato-mobile
 
-### Step 3: Run Mobile App (30 seconds)
-Open a new terminal:
-```powershell
-.\run-mobile.ps1
-```
-Then press:
+Then access the mobile app at `http://localhost:8081` and press:
 - `a` for Android emulator
 - `w` for web browser
 - Scan QR code for physical device
