@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDailySummary } from '../../hooks/useMealLogging';
+import { useDailySummary, useDeleteMeal } from '../../hooks/useMealLogging';
 import { CalorieRingChart } from '../../components/dashboard/CalorieRingChart';
 import { MacroTile } from '../../components/dashboard/MacroTile';
 import { RecommendationCard } from '../../components/dashboard/RecommendationCard';
@@ -10,6 +10,7 @@ import { MealInputBar } from '../../components/dashboard/MealInputBar';
 export const DashboardScreen: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { data: summaryData, isLoading, refetch, isRefetching } = useDailySummary();
+  const deleteMeal = useDeleteMeal();
 
   const firstName = profile?.fullName.split(' ')[0] || 'User';
   const today = new Date().toLocaleDateString('en-US', { 
@@ -24,6 +25,30 @@ export const DashboardScreen: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleDeleteMeal = (mealId: string, mealName: string) => {
+    Alert.alert(
+      'Delete Meal',
+      `Are you sure you want to delete "${mealName}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteMeal.mutate(mealId, {
+              onSuccess: () => {
+                Alert.alert('Success', 'Meal deleted successfully');
+              },
+              onError: (error: any) => {
+                Alert.alert('Error', error.response?.data?.message || 'Failed to delete meal');
+              },
+            });
+          },
+        },
+      ]
+    );
   };
 
   if (isLoading) {
@@ -116,15 +141,26 @@ export const DashboardScreen: React.FC = () => {
               {meals.map((meal) => (
                 <View key={meal.id} style={styles.mealCard}>
                   <View style={styles.mealHeader}>
-                    <Text style={styles.mealName}>{meal.mealName}</Text>
-                    <Text style={styles.mealCalories}>{meal.totalCalories.toFixed(0)} cal</Text>
+                    <View style={styles.mealHeaderLeft}>
+                      <Text style={styles.mealName}>{meal.mealName}</Text>
+                      <Text style={styles.mealTime}>
+                        {new Date(meal.mealTime).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </Text>
+                    </View>
+                    <View style={styles.mealHeaderRight}>
+                      <Text style={styles.mealCalories}>{meal.totalCalories.toFixed(0)} cal</Text>
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteMeal(meal.id, meal.mealName)}
+                        disabled={deleteMeal.isPending}
+                      >
+                        <Text style={styles.deleteIcon}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.mealTime}>
-                    {new Date(meal.mealTime).toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </Text>
                   <View style={styles.mealMacros}>
                     <Text style={styles.macroText}>P: {meal.protein.toFixed(0)}g</Text>
                     <Text style={styles.macroText}>C: {meal.carbs.toFixed(0)}g</Text>
@@ -232,13 +268,22 @@ const styles = StyleSheet.create({
   mealHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  mealHeaderLeft: {
+    flex: 1,
+  },
+  mealHeaderRight: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 8,
   },
   mealName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#000000',
+    marginBottom: 4,
   },
   mealCalories: {
     fontSize: 16,
@@ -248,7 +293,12 @@ const styles = StyleSheet.create({
   mealTime: {
     fontSize: 12,
     color: '#999999',
-    marginBottom: 8,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteIcon: {
+    fontSize: 18,
   },
   mealMacros: {
     flexDirection: 'row',

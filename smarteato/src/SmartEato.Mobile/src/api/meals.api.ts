@@ -6,6 +6,10 @@ export const mealsApi = {
     return apiClient.post('/api/meals', data);
   },
 
+  deleteMeal: async (mealId: string): Promise<void> => {
+    return apiClient.delete(`/api/meals/${mealId}`);
+  },
+
   getDailySummary: async (date?: string): Promise<DailySummaryResponse> => {
     const params = date ? `?date=${date}` : '';
     return apiClient.get(`/api/meals/daily-summary${params}`);

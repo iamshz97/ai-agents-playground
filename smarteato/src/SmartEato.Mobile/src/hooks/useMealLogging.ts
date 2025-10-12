@@ -17,6 +17,18 @@ export const useLogMeal = () => {
   });
 };
 
+export const useDeleteMeal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: mealsApi.deleteMeal,
+    onSuccess: () => {
+      // Invalidate and refetch daily summary
+      queryClient.invalidateQueries({ queryKey: ['dailySummary'] });
+    },
+  });
+};
+
 export const useDailySummary = (date?: string) => {
   const { user } = useAuth();
   const [summary, setSummary] = useState<DailySummaryResponse | null>(null);

@@ -73,6 +73,44 @@ public class MealService : IMealService
         }
     }
 
+    public async Task<bool> DeleteMealAsync(Guid userId, Guid mealId)
+    {
+        try
+        {
+            var client = CreateSupabaseClient();
+            
+            // First check if the meal exists and belongs to the user
+            var checkResponse = await client.GetAsync($"meals?id=eq.{mealId}&user_id=eq.{userId}&select=id");
+            
+            if (!checkResponse.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Meal {MealId} not found or doesn't belong to user {UserId}", mealId, userId);
+                return false;
+            }
+
+            var checkBody = await checkResponse.Content.ReadAsStringAsync();
+            var meals = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(checkBody);
+            
+            if (meals == null || meals.Count == 0)
+            {
+                _logger.LogWarning("Meal {MealId} not found for user {UserId}", mealId, userId);
+                return false;
+            }
+
+            // Now delete the meal
+            var deleteResponse = await client.DeleteAsync($"meals?id=eq.{mealId}&user_id=eq.{userId}");
+            deleteResponse.EnsureSuccessStatusCode();
+
+            _logger.LogInformation("Deleted meal {MealId} for user {UserId}", mealId, userId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting meal {MealId}", mealId);
+            return false;
+        }
+    }
+
     public async Task<List<Meal>> GetTodaysMealsAsync(Guid userId, DateOnly date)
     {
         try
