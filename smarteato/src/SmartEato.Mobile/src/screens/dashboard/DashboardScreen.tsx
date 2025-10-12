@@ -1,16 +1,29 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ScrollView, 
+  ActivityIndicator, 
+  RefreshControl, 
+  Alert,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDailySummary, useDeleteMeal } from '../../hooks/useMealLogging';
+import { useDailySummary, useDeleteMeal, useLogMeal } from '../../hooks/useMealLogging';
 import { CalorieRingChart } from '../../components/dashboard/CalorieRingChart';
-import { MacroTile } from '../../components/dashboard/MacroTile';
 import { RecommendationCard } from '../../components/dashboard/RecommendationCard';
 import { MealInputBar } from '../../components/dashboard/MealInputBar';
+import { MealCardSkeleton } from '../../components/dashboard/MealCardSkeleton';
 
 export const DashboardScreen: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { data: summaryData, isLoading, refetch, isRefetching } = useDailySummary();
   const deleteMeal = useDeleteMeal();
+  const logMeal = useLogMeal();
 
   const firstName = profile?.fullName.split(' ')[0] || 'User';
   const today = new Date().toLocaleDateString('en-US', { 
@@ -62,6 +75,7 @@ export const DashboardScreen: React.FC = () => {
   const summary = summaryData?.summary;
   const recommendation = summaryData?.recommendation;
   const meals = summaryData?.meals || [];
+  const isSubmitting = (summaryData as any)?._isSubmitting || logMeal.isPending;
 
   // Calculate macro goals (simple percentages of total calories)
   const proteinGoal = (summary?.calorieGoal || 2000) * 0.30 / 4; // 30% of calories, 4 cal/g
@@ -69,7 +83,11 @@ export const DashboardScreen: React.FC = () => {
   const fatsGoal = (summary?.calorieGoal || 2000) * 0.30 / 9; // 30% of calories, 9 cal/g
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -88,38 +106,20 @@ export const DashboardScreen: React.FC = () => {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Calorie Ring */}
+        {/* Calorie Ring with Macros */}
         <View style={styles.section}>
           <CalorieRingChart
             consumed={summary?.totalCalories || 0}
             goal={summary?.calorieGoal || 2000}
+            protein={summary?.totalProtein || 0}
+            proteinGoal={proteinGoal}
+            carbs={summary?.totalCarbs || 0}
+            carbsGoal={carbsGoal}
+            fats={summary?.totalFats || 0}
+            fatsGoal={fatsGoal}
           />
-        </View>
-
-        {/* Macro Tiles */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Macronutrients</Text>
-          <View style={styles.macroGrid}>
-            <MacroTile
-              name="Protein"
-              consumed={summary?.totalProtein || 0}
-              goal={proteinGoal}
-              color="#FF6B6B"
-            />
-            <MacroTile
-              name="Carbs"
-              consumed={summary?.totalCarbs || 0}
-              goal={carbsGoal}
-              color="#4ECDC4"
-            />
-            <MacroTile
-              name="Fats"
-              consumed={summary?.totalFats || 0}
-              goal={fatsGoal}
-              color="#FFD93D"
-            />
-          </View>
         </View>
 
         {/* Recommendation */}
@@ -130,14 +130,18 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Recent Meals */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Meals ({meals.length})</Text>
-          {meals.length === 0 ? (
+          <Text style={styles.sectionTitle}>Today's Meals ({meals.length}{isSubmitting ? '+' : ''})</Text>
+          {meals.length === 0 && !isSubmitting ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>No meals logged yet today</Text>
-              <Text style={styles.emptySubtext}>Use the chat below to log your first meal!</Text>
+              <Text style={styles.emptySubtext}>Use the input below to log your first meal!</Text>
             </View>
           ) : (
             <View style={styles.mealsList}>
+              {/* Show skeleton while meal is being processed */}
+              {isSubmitting && <MealCardSkeleton />}
+              
+              {/* Show actual meals */}
               {meals.map((meal) => (
                 <View key={meal.id} style={styles.mealCard}>
                   <View style={styles.mealHeader}>
@@ -157,7 +161,7 @@ export const DashboardScreen: React.FC = () => {
                         onPress={() => handleDeleteMeal(meal.id, meal.mealName)}
                         disabled={deleteMeal.isPending}
                       >
-                        <Text style={styles.deleteIcon}>🗑️</Text>
+                        <Ionicons name="trash-outline" size={18} color="#666666" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -175,7 +179,7 @@ export const DashboardScreen: React.FC = () => {
 
       {/* Input Bar */}
       <MealInputBar />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -237,10 +241,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 12,
   },
-  macroGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   emptyState: {
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
@@ -296,9 +296,6 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 4,
-  },
-  deleteIcon: {
-    fontSize: 18,
   },
   mealMacros: {
     flexDirection: 'row',

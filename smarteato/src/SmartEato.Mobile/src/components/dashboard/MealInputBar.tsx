@@ -9,6 +9,7 @@ import {
   Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useLogMeal } from '../../hooks/useMealLogging';
 
 export const MealInputBar: React.FC = () => {
@@ -65,33 +66,31 @@ export const MealInputBar: React.FC = () => {
       return;
     }
 
-    logMeal.mutate(
-      {
-        description: message || 'Meal from photo',
-        imageBase64: selectedImage || undefined,
+    // Clear input immediately for better UX
+    const mealData = {
+      description: message || 'Meal from photo',
+      imageBase64: selectedImage || undefined,
+    };
+    setMessage('');
+    setSelectedImage(null);
+
+    // Submit meal (fire and forget for images to avoid waiting)
+    logMeal.mutate(mealData, {
+      onError: (error: any) => {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to log meal');
       },
-      {
-        onSuccess: () => {
-          setMessage('');
-          setSelectedImage(null);
-          Alert.alert('Success', 'Meal logged successfully!');
-        },
-        onError: (error: any) => {
-          Alert.alert('Error', error.response?.data?.message || 'Failed to log meal');
-        },
-      }
-    );
+    });
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
-          <Text style={styles.iconText}>🖼️</Text>
+          <Ionicons name="image-outline" size={24} color="#666666" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
-          <Text style={styles.iconText}>📷</Text>
+          <Ionicons name="camera-outline" size={24} color="#666666" />
         </TouchableOpacity>
 
         <TextInput
@@ -112,16 +111,16 @@ export const MealInputBar: React.FC = () => {
           {logMeal.isPending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.sendIcon}>➤</Text>
+            <Ionicons name="send" size={18} color="#FFFFFF" />
           )}
         </TouchableOpacity>
       </View>
       {selectedImage && (
         <View style={styles.imageIndicator}>
-          <Text style={styles.iconText}>📸</Text>
+          <Ionicons name="image" size={16} color="#000000" />
           <Text style={styles.imageText}>Image attached</Text>
           <TouchableOpacity onPress={() => setSelectedImage(null)}>
-            <Text style={styles.iconText}>❌</Text>
+            <Ionicons name="close-circle" size={20} color="#666666" />
           </TouchableOpacity>
         </View>
       )}
@@ -145,9 +144,6 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 8,
   },
-  iconText: {
-    fontSize: 20,
-  },
   input: {
     flex: 1,
     backgroundColor: '#F5F5F5',
@@ -168,11 +164,6 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
-  },
-  sendIcon: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   imageIndicator: {
     flexDirection: 'row',

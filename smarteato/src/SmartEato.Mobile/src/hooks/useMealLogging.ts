@@ -10,10 +10,29 @@ export const useLogMeal = () => {
 
   return useMutation({
     mutationFn: mealsApi.logMeal,
-    onSuccess: () => {
-      // Invalidate and refetch daily summary
-      queryClient.invalidateQueries({ queryKey: ['dailySummary'] });
+    onMutate: async () => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['dailySummary'] });
+
+      // Optimistically update with loading state
+      queryClient.setQueryData(['dailySummary'], (old: DailySummaryResponse | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          _isSubmitting: true, // Flag for skeleton state
+        };
+      });
     },
+    onError: () => {
+      // Remove loading state on error
+      queryClient.setQueryData(['dailySummary'], (old: any) => {
+        if (!old) return old;
+        const { _isSubmitting, ...rest } = old;
+        return rest;
+      });
+    },
+    // Real-time subscription will handle the actual update
+    // No need to invalidate here - Supabase realtime will trigger refetch
   });
 };
 
@@ -22,10 +41,8 @@ export const useDeleteMeal = () => {
 
   return useMutation({
     mutationFn: mealsApi.deleteMeal,
-    onSuccess: () => {
-      // Invalidate and refetch daily summary
-      queryClient.invalidateQueries({ queryKey: ['dailySummary'] });
-    },
+    // Real-time subscription will handle the update automatically
+    // No need to invalidate - Supabase realtime triggers refetch
   });
 };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { Recommendation } from '../../types/meal.types';
 
 interface RecommendationCardProps {
@@ -10,7 +11,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommen
   if (!recommendation) {
     return (
       <View style={styles.container}>
-        <Text style={styles.icon}>💡</Text>
+        <Ionicons name="bulb-outline" size={24} color="#FFB800" style={styles.icon} />
         <View style={styles.content}>
           <Text style={styles.text}>Log your first meal to get personalized recommendations!</Text>
         </View>
@@ -20,7 +21,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommen
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>💡</Text>
+      <Ionicons name="bulb-outline" size={24} color="#FFB800" style={styles.icon} />
       <View style={styles.content}>
         <Text style={styles.recommendationText}>{recommendation.recommendationText}</Text>
         <Text style={styles.reason}>{recommendation.reason}</Text>
@@ -40,7 +41,6 @@ const styles = StyleSheet.create({
     borderLeftColor: '#FFB800',
   },
   icon: {
-    fontSize: 24,
     marginRight: 12,
   },
   content: {

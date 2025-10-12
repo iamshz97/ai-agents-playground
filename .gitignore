@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 smarteato/src/SmartEato.Api/appsettings.json
+smarteato/src/SmartEato.Api/appsettings.json
