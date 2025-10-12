@@ -63,8 +63,14 @@ export const useDailySummary = (date?: string) => {
 
     const today = date || new Date().toISOString().split('T')[0];
     
+    console.log('[Realtime] Setting up subscription for user:', user.id);
+    
     const channel = supabase
-      .channel('daily-summary-realtime')
+      .channel('daily-summary-realtime', {
+        config: {
+          broadcast: { self: true },
+        },
+      })
       .on(
         'postgres_changes',
         {
@@ -74,7 +80,7 @@ export const useDailySummary = (date?: string) => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Daily summary updated:', payload);
+          console.log('[Realtime] Daily summary updated:', payload.eventType, payload.new);
           query.refetch();
         }
       )
@@ -87,7 +93,7 @@ export const useDailySummary = (date?: string) => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Meals updated:', payload);
+          console.log('[Realtime] Meals updated:', payload.eventType, (payload.new as any)?.id);
           query.refetch();
         }
       )
@@ -100,16 +106,29 @@ export const useDailySummary = (date?: string) => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Recommendation updated:', payload);
+          console.log('[Realtime] Recommendation updated:', payload.eventType);
           query.refetch();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] ✅ Successfully subscribed to realtime updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] ❌ Channel error:', err);
+        } else if (status === 'TIMED_OUT') {
+          console.error('[Realtime] ⏱️ Subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.log('[Realtime] 🔌 Subscription closed');
+        } else {
+          console.log('[Realtime] Status:', status);
+        }
+      });
 
     return () => {
+      console.log('[Realtime] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, [user, date]);
+  }, [user, date, query]);
 
   return query;
 };
