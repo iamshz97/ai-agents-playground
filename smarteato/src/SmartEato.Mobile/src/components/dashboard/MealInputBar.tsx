@@ -82,20 +82,29 @@ export const MealInputBar: React.FC = () => {
     });
   };
 
+  // Dynamic placeholder based on time of day
+  const getPlaceholder = () => {
+    const hour = new Date().getHours();
+    if (hour < 11) return "Log breakfast";
+    if (hour < 15) return "Add lunch";
+    if (hour < 19) return "Log snack";
+    return "Add dinner";
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
-          <Ionicons name="image-outline" size={24} color="#666666" />
+          <Ionicons name="image-outline" size={24} color="#6B7280" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
-          <Ionicons name="camera-outline" size={24} color="#666666" />
+          <Ionicons name="camera-outline" size={24} color="#6B7280" />
         </TouchableOpacity>
 
         <TextInput
           style={styles.input}
-          placeholder="What did you eat?"
+          placeholder={getPlaceholder()}
           value={message}
           onChangeText={setMessage}
           editable={!logMeal.isPending}
@@ -111,16 +120,16 @@ export const MealInputBar: React.FC = () => {
           {logMeal.isPending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Ionicons name="send" size={18} color="#FFFFFF" />
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           )}
         </TouchableOpacity>
       </View>
       {selectedImage && (
         <View style={styles.imageIndicator}>
-          <Ionicons name="image" size={16} color="#000000" />
+          <Ionicons name="image" size={16} color="#059669" />
           <Text style={styles.imageText}>Image attached</Text>
           <TouchableOpacity onPress={() => setSelectedImage(null)}>
-            <Ionicons name="close-circle" size={20} color="#666666" />
+            <Ionicons name="close-circle" size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
       )}
@@ -132,33 +141,42 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderTopColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   iconButton: {
-    padding: 8,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
   },
   input: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
+    paddingVertical: 12,
+    fontSize: 16,
     maxHeight: 100,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   sendButton: {
     backgroundColor: '#000000',
-    borderRadius: 20,
-    padding: 10,
-    width: 40,
-    height: 40,
+    borderRadius: 12,
+    padding: 12,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -169,15 +187,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: '#F5F5F5',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#F0FDF4',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
   },
   imageText: {
     flex: 1,
-    fontSize: 12,
-    color: '#666666',
+    fontSize: 14,
+    color: '#059669',
+    fontWeight: '500',
   },
 });
 

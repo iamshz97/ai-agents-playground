@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 
-interface CalorieRingChartProps {
+interface DailyIntakeCardProps {
   consumed: number;
   goal: number;
   protein: number;
@@ -13,7 +14,7 @@ interface CalorieRingChartProps {
   fatsGoal: number;
 }
 
-export const CalorieRingChart: React.FC<CalorieRingChartProps> = ({
+export const DailyIntakeCard: React.FC<DailyIntakeCardProps> = ({
   consumed,
   goal,
   protein,
@@ -23,117 +24,113 @@ export const CalorieRingChart: React.FC<CalorieRingChartProps> = ({
   fats,
   fatsGoal,
 }) => {
-  const strokeWidth = 10;
-  const gap = 4;
+  const strokeWidth = 8;
+  const calorieRadius = 70;
+  
+  const percentage = Math.min((consumed / goal) * 100, 100);
+  const circumference = 2 * Math.PI * calorieRadius;
+  const strokeDashoffset = circumference - (circumference * percentage) / 100;
 
-  // Concentric circles with decreasing radii
-  const calorieRadius = 90;
-  const proteinRadius = calorieRadius - strokeWidth - gap;
-  const carbsRadius = proteinRadius - strokeWidth - gap;
-  const fatsRadius = carbsRadius - strokeWidth - gap;
-
-  const createRingProps = (consumed: number, goal: number, radius: number) => {
-    const percentage = Math.min((consumed / goal) * 100, 100);
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (circumference * percentage) / 100;
-    return { circumference, strokeDashoffset };
-  };
-
-  const calorieRing = createRingProps(consumed, goal, calorieRadius);
-  const proteinRing = createRingProps(protein, proteinGoal, proteinRadius);
-  const carbsRing = createRingProps(carbs, carbsGoal, carbsRadius);
-  const fatsRing = createRingProps(fats, fatsGoal, fatsRadius);
-
-  const remaining = Math.max(goal - consumed, 0);
+  const proteinLeft = Math.max(proteinGoal - protein, 0);
+  const carbsLeft = Math.max(carbsGoal - carbs, 0);
+  const fatsLeft = Math.max(fatsGoal - fats, 0);
 
   return (
-    <View style={styles.container}>
-      <Svg height="220" width="220" viewBox="0 0 220 220">
-        {/* Calorie Ring (Outer - Black) */}
-        <Circle cx="110" cy="110" r={calorieRadius} stroke="#F0F0F0" strokeWidth={strokeWidth} fill="none" />
-        <Circle
-          cx="110"
-          cy="110"
-          r={calorieRadius}
-          stroke="#000000"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={calorieRing.circumference}
-          strokeDashoffset={calorieRing.strokeDashoffset}
-          strokeLinecap="round"
-          transform="rotate(-90 110 110)"
-        />
-
-        {/* Protein Ring (Red) */}
-        <Circle cx="110" cy="110" r={proteinRadius} stroke="#FFE5E5" strokeWidth={strokeWidth} fill="none" />
-        <Circle
-          cx="110"
-          cy="110"
-          r={proteinRadius}
-          stroke="#FF6B6B"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={proteinRing.circumference}
-          strokeDashoffset={proteinRing.strokeDashoffset}
-          strokeLinecap="round"
-          transform="rotate(-90 110 110)"
-        />
-
-        {/* Carbs Ring (Teal) */}
-        <Circle cx="110" cy="110" r={carbsRadius} stroke="#E0F7F6" strokeWidth={strokeWidth} fill="none" />
-        <Circle
-          cx="110"
-          cy="110"
-          r={carbsRadius}
-          stroke="#4ECDC4"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={carbsRing.circumference}
-          strokeDashoffset={carbsRing.strokeDashoffset}
-          strokeLinecap="round"
-          transform="rotate(-90 110 110)"
-        />
-
-        {/* Fats Ring (Yellow) */}
-        <Circle cx="110" cy="110" r={fatsRadius} stroke="#FFF9E5" strokeWidth={strokeWidth} fill="none" />
-        <Circle
-          cx="110"
-          cy="110"
-          r={fatsRadius}
-          stroke="#FFD93D"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={fatsRing.circumference}
-          strokeDashoffset={fatsRing.strokeDashoffset}
-          strokeLinecap="round"
-          transform="rotate(-90 110 110)"
-        />
-      </Svg>
-
-      {/* Center Text */}
-      <View style={styles.textContainer}>
-        <Text style={styles.remainingText}>{remaining.toFixed(0)}</Text>
-        <Text style={styles.labelText}>cal remaining</Text>
-        <Text style={styles.detailText}>
-          {consumed.toFixed(0)} / {goal.toFixed(0)}
-        </Text>
+    <View style={styles.card}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Daily intake</Text>
+        <Ionicons name="flash" size={20} color="#000000" />
       </View>
 
-      {/* Macro Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-          <Text style={styles.legendText}>P: {protein.toFixed(0)}g</Text>
+      {/* Rings row - Apple-like compact layout */}
+      <View style={styles.ringsRow}>
+        {/* Main calories ring */}
+        <View style={styles.mainRingBlock}>
+          <View style={styles.svgContainer}>
+            <Svg height="72" width="72" viewBox="0 0 72 72">
+              <Circle cx="36" cy="36" r="28" stroke="#FFFFFF" strokeWidth="5" fill="none" />
+              <Circle
+                cx="36"
+                cy="36"
+                r="28"
+                stroke="#10B981"
+                strokeWidth="5"
+                fill="none"
+                strokeDasharray={2 * Math.PI * 28}
+                strokeDashoffset={2 * Math.PI * 28 * (1 - Math.min(consumed / goal, 1))}
+                strokeLinecap="round"
+                transform="rotate(-90 36 36)"
+              />
+            </Svg>
+            <View style={styles.centerTextSmall}>
+              <Text style={styles.calorieNumberSmall}>{consumed.toFixed(0)}</Text>
+              <Text style={styles.calorieLabelSmall}>/ {goal.toFixed(0)}</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.legendDivider} />
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
-          <Text style={styles.legendText}>C: {carbs.toFixed(0)}g</Text>
+
+        {/* Protein mini ring */}
+        <View style={styles.macroStack}>
+          <Svg height="28" width="28" viewBox="0 0 24 24">
+            <Circle cx="12" cy="12" r="9" stroke="#F3F4F6" strokeWidth="3" fill="none" />
+            <Circle
+              cx="12"
+              cy="12"
+              r="9"
+              stroke="#EF4444"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 9}
+              strokeDashoffset={2 * Math.PI * 9 * (1 - Math.min(protein / proteinGoal, 1))}
+              strokeLinecap="round"
+              transform="rotate(-90 12 12)"
+            />
+          </Svg>
+          <Text style={styles.stackValue}>{`${protein.toFixed(0)}g/${proteinGoal.toFixed(0)}g`}</Text>
+          <Text style={styles.stackLabel}>Protein</Text>
         </View>
-        <View style={styles.legendDivider} />
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#FFD93D' }]} />
-          <Text style={styles.legendText}>F: {fats.toFixed(0)}g</Text>
+
+        {/* Carbs mini ring */}
+        <View style={styles.macroStack}>
+          <Svg height="28" width="28" viewBox="0 0 24 24">
+            <Circle cx="12" cy="12" r="9" stroke="#F3F4F6" strokeWidth="3" fill="none" />
+            <Circle
+              cx="12"
+              cy="12"
+              r="9"
+              stroke="#3B82F6"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 9}
+              strokeDashoffset={2 * Math.PI * 9 * (1 - Math.min(carbs / carbsGoal, 1))}
+              strokeLinecap="round"
+              transform="rotate(-90 12 12)"
+            />
+          </Svg>
+          <Text style={styles.stackValue}>{`${carbs.toFixed(0)}g/${carbsGoal.toFixed(0)}g`}</Text>
+          <Text style={styles.stackLabel}>Carbs</Text>
+        </View>
+
+        {/* Fats mini ring */}
+        <View style={styles.macroStack}>
+          <Svg height="28" width="28" viewBox="0 0 24 24">
+            <Circle cx="12" cy="12" r="9" stroke="#F3F4F6" strokeWidth="3" fill="none" />
+            <Circle
+              cx="12"
+              cy="12"
+              r="9"
+              stroke="#8B5CF6"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 9}
+              strokeDashoffset={2 * Math.PI * 9 * (1 - Math.min(fats / fatsGoal, 1))}
+              strokeLinecap="round"
+              transform="rotate(-90 12 12)"
+            />
+          </Svg>
+          <Text style={styles.stackValue}>{`${fats.toFixed(0)}g/${fatsGoal.toFixed(0)}g`}</Text>
+          <Text style={styles.stackLabel}>Fats</Text>
         </View>
       </View>
     </View>
@@ -141,53 +138,133 @@ export const CalorieRingChart: React.FC<CalorieRingChartProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
+    backgroundColor: '#FEFEFE',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  progressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  svgContainer: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  textContainer: {
+  centerText: {
     position: 'absolute',
     alignItems: 'center',
-    top: 70,
+    justifyContent: 'center',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  remainingText: {
-    fontSize: 36,
+  calorieNumber: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#000000',
+    lineHeight: 36,
   },
-  labelText: {
+  calorieLabel: {
     fontSize: 14,
-    color: '#666666',
+    fontWeight: '500',
+    color: '#6B7280',
+    marginTop: 2,
   },
-  detailText: {
-    fontSize: 12,
-    color: '#999999',
-    marginTop: 4,
+  macrosContainer: {
+    gap: 16,
   },
-  legend: {
+  ringsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  mainRingBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerTextSmall: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calorieNumberSmall: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    lineHeight: 20,
+  },
+  calorieLabelSmall: {
+    fontSize: 10,
+    color: '#6B7280',
+  },
+  macroStack: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  stackValue: {
+    fontSize: 11,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  stackLabel: {
+    fontSize: 10,
+    color: '#6B7280',
+  },
+  macroItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  legendItem: {
-    flexDirection: 'row',
+  macroIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  macroProgressContainer: {
+    marginRight: 12,
   },
-  legendText: {
-    fontSize: 13,
-    color: '#666666',
-    fontWeight: '500',
+  miniProgressRing: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  legendDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: '#E0E0E0',
+  macroTextContainer: {
+    flex: 1,
+  },
+  macroAmount: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    lineHeight: 24,
+  },
+  macroLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#374151',
+    marginTop: 4,
   },
 });

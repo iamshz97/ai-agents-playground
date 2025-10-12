@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDailySummary, useDeleteMeal, useLogMeal } from '../../hooks/useMealLogging';
-import { CalorieRingChart } from '../../components/dashboard/CalorieRingChart';
+import { DailyIntakeCard } from '../../components/dashboard/CalorieRingChart';
 import { RecommendationCard } from '../../components/dashboard/RecommendationCard';
 import { MealInputBar } from '../../components/dashboard/MealInputBar';
 import { MealCardSkeleton } from '../../components/dashboard/MealCardSkeleton';
@@ -90,13 +90,15 @@ export const DashboardScreen: React.FC = () => {
     >
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hey {firstName}!</Text>
-          <Text style={styles.date}>{today}</Text>
+        <View style={styles.headerMain}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>Hey {firstName}!</Text>
+            <Text style={styles.date}>{today}</Text>
+          </View>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={24} color="#6B7280" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -108,9 +110,9 @@ export const DashboardScreen: React.FC = () => {
         }
         keyboardShouldPersistTaps="handled"
       >
-        {/* Calorie Ring with Macros */}
-        <View style={styles.section}>
-          <CalorieRingChart
+        {/* Daily Intake Summary Card */}
+        <View style={styles.cardContainer}>
+          <DailyIntakeCard
             consumed={summary?.totalCalories || 0}
             goal={summary?.calorieGoal || 2000}
             protein={summary?.totalProtein || 0}
@@ -189,21 +191,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
-    flex: 1,
+    flex: 1,  
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   header: {
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    marginBottom: 16,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  time: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statusIcon: {
+    marginLeft: 4,
+  },
+  headerMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
     fontSize: 28,
@@ -211,20 +239,13 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   date: {
-    fontSize: 14,
-    color: '#666666',
+    fontSize: 16,
+    color: '#6B7280',
     marginTop: 4,
   },
-  logoutButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  settingsButton: {
+    padding: 8,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  logoutText: {
-    fontSize: 14,
-    color: '#000000',
   },
   scrollView: {
     flex: 1,
@@ -232,14 +253,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  cardContainer: {
+    marginBottom: 16,
+  },
   section: {
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 16,
   },
   emptyState: {
     backgroundColor: '#F5F5F5',
